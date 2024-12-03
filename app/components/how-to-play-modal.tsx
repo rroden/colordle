@@ -1,7 +1,7 @@
 import { faSquare, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export default function Modal() {
+export default function HowToPlayModal() {
 
     
     return (
