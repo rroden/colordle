@@ -2,7 +2,7 @@ import GameFunctionality from './components/game-functionality';
 import HowToPlayModal from './components/how-to-play-modal';
 
 type SearchParamProps = {
-  searchParams: Record<string, string> | null | undefined;
+  searchParams: Promise<Record<string, string> | null | undefined>;
 };
 
 export default async function Home({ searchParams }: SearchParamProps) {

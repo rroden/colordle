@@ -21,7 +21,7 @@ export default function SorryModal({solution, startNewGame, handleModalClose}: S
         <div className="p-4 pb-16 w-96 shadow-lg rounded bg-darkgrey">
             {/* Navigates back to the base URL - closing the modal */}
             <div className="grid grid-row justify-items-end">
-                <a onClick={() => handleModalClose()}><FontAwesomeIcon icon={faX} className="text-lg text-mygrey"/></a>
+                <a onClick={() => handleModalClose()}><FontAwesomeIcon icon={faX} className="text-lg text-mygrey cursor-pointer"/></a>
             </div>
           <div className="text-center flex flex-col gap-4 place-items-center">
             <div className="pb-8 flex flex-col gap-y-2">
@@ -29,7 +29,7 @@ export default function SorryModal({solution, startNewGame, handleModalClose}: S
                 <h5 className="text-mygrey font-light">The answer was:</h5>
                 <GameGridRow guess={solution}/>
             </div>
-            <a onClick={() => handleClose()} className='rounded-lg bg-mygrey text-darkgrey py-4 px-4 text-xl max-w-36'>New Game</a>
+            <a onClick={() => handleClose()} className='rounded-lg bg-mygrey text-darkgrey py-4 px-4 text-xl max-w-36 cursor-pointer'>New Game</a>
           </div>
         </div>
       </div>

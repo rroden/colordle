@@ -24,32 +24,30 @@ function createRandomSolution(): Solution {
     return [getRandomItem(colors), getRandomItem(colors), getRandomItem(colors), getRandomItem(colors)];
 }
 
-let defaultGuess: Guess = [undefined, undefined, undefined, undefined];
-let defaultGuessList: Guess[] = [];
-let defaultHint: Hint[] = []
+const defaultGuess: Guess = [undefined, undefined, undefined, undefined];
+const defaultGuessList: Guess[] = [];
+const defaultHint: Hint[] = []
 export default function GameFunctionality() {
 
-    let [currentGuess, setCurrentGuess] = useState<Guess>(defaultGuess);
-    let [showAlert, setShowAlert] = useState(false);
-    let [showSorryModal, setShowSorryModal] = useState(false);
-    let [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
-    let [solution, setSolution] = useState(createRandomSolution())
-    let [turn, setTurn] = useState<number>(9)
-    let [guesses, setGuesses] = useState(defaultGuessList);
-    let [hints, setHints] = useState<Hint[]>(defaultHint)
+    const [currentGuess, setCurrentGuess] = useState<Guess>(defaultGuess);
+    const [showAlert, setShowAlert] = useState(false);
+    const [showSorryModal, setShowSorryModal] = useState(false);
+    const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+    const [solution, setSolution] = useState(createRandomSolution())
+    const [turn, setTurn] = useState<number>(1)
+    const [guesses, setGuesses] = useState(defaultGuessList);
+    const [hints, setHints] = useState<Hint[]>(defaultHint)
+    const [gameOver, setGameOver] = useState(false)
 
     console.log(`The solution is ${solution}`)
-    console.log(`Guesses are ${JSON.stringify(guesses)}`)
     console.log(`Current Guesses are ${currentGuess}`)
 
     function setNextColor(color: Color): void {
-        console.log(`Color: ${color}`)
         setCurrentGuess((p) => {
-            var updatedGuess: Guess = [...p];
+            const updatedGuess: Guess = [...p];
             for (let i = 0; i < updatedGuess.length; i++) {
                 if (currentGuess[i] === undefined) {
                     updatedGuess[i] = color;
-                    console.log(`Updated guess: ${updatedGuess}`)
                     break;
                 }
             }
@@ -66,8 +64,11 @@ export default function GameFunctionality() {
     }
 
     function undoLastColor(): void {
+        if (gameOver){
+            return
+        }
         setCurrentGuess((p) => {
-            var updatedGuess: Guess = [...p]
+            const updatedGuess: Guess = [...p]
             for (let i = 3; i >= 0; i--){
                 if (updatedGuess[i] != undefined){
                     updatedGuess[i] = undefined                    
@@ -81,6 +82,8 @@ export default function GameFunctionality() {
     function startNewGame(): void {
         setTurn(1);
         setCurrentGuess(defaultGuess);
+        setGuesses(defaultGuessList);
+        setHints(defaultHint)
         setSolution(createRandomSolution());
     }
 
@@ -94,8 +97,11 @@ export default function GameFunctionality() {
 
 
     function submitGuess(): void {
+        if (gameOver){
+            return
+        }
         let completeGuess = true;
-        for (let color of Object.keys(currentGuess)){
+        for (const color of Object.keys(currentGuess)){
             if (currentGuess[color as keyof Solution] === undefined){
                 setShowAlert(true);
                 completeGuess = false;
@@ -108,32 +114,62 @@ export default function GameFunctionality() {
         if (completeGuess === true) { 
             if (JSON.stringify(Object.values(currentGuess)) == JSON.stringify(solution)){
                 setShowCongratulationsModal(true)  
+                setGameOver(true)
             }
             else {
                 setTurn(turn + 1)
                 console.log(`Turn is ${turn}`)
 
                 if (turn === 10){
-                    console.log("turn is 10")
                     setShowSorryModal(true)
                 }
                 else {
                     updateGuesses()
                     setCurrentGuess(defaultGuess)
-                    // Get green number
-                    var correctlyPlaced = 0
+
+                    const correct: Color[] = []
+                    const correctIndexes: number[] = []
                     // Get yellow number
-                    var incorrectlyPlaced = 0
-                    for (let i = 0; i < solution.length; i++){
-                        if (solution[i] == currentGuess[i]){
-                            correctlyPlaced++
+                    const partlyCorrect: Color[] = []
+
+                    solution.map((color, i) => {
+                        if (currentGuess[i] == color){
+                            console.log(`${color} is correctly placed`)
+                            correct.push(color)
+                            correctIndexes.push(i)
                         }
-                        else if (solution.includes(currentGuess[i] as Color)){
-                            incorrectlyPlaced++
-                        }
-                    }
+                    })
+
+                    const guessWithoutCorrect = Array.from(currentGuess)
+                    // console.log(`correctIndexes: ${correctIndexes}`)
+                    correctIndexes.sort((a, b) => b - a).forEach((i) => {guessWithoutCorrect.splice(i, 1)})
+
+                    console.log(`guessWithoutCorrect: ${guessWithoutCorrect}`)
+
+                    const solutionWithoutCorrect = Array.from(solution)
+                    console.log(`correctIndexes: ${correctIndexes}`)
+                    correctIndexes.sort((a, b) => b - a).forEach((i) => {solutionWithoutCorrect.splice(i, 1)})
+                    console.log(`solutionWithoutCorrect: ${solutionWithoutCorrect}`)
+
+                    solutionWithoutCorrect.forEach((color) => { 
+                        if (guessWithoutCorrect.includes(color)){
+                            console.log(`Solution: ${solution}`) // Yellow,Green,Green,Blue
+                            const matchingColors = solutionWithoutCorrect.filter((x) => x == color)
+                            const matchingColorsInPartlyCorrect = partlyCorrect.filter((x) => x == color)
+                            const matchingColorsInGuess = guessWithoutCorrect.filter((x) => x == color)
+
+                            console.log(`Number of color ${color} in solution: ${matchingColors.length}`) // 2
+                            console.log(`Number of already matching ${color}: ${matchingColorsInPartlyCorrect.length}`) // 0
+                            console.log(`Number of color ${color} in guess: ${matchingColorsInGuess}`) // 4
+
+                            if (matchingColorsInGuess.length > (matchingColorsInPartlyCorrect.length)) {
+                                console.log(`${color} is incorrectly placed`)
+                                partlyCorrect.push(color)
+                            }
+                        }})
+
                     setHints(previousState => {
-                            return [... previousState, [correctlyPlaced, incorrectlyPlaced]]
+                            return [... previousState, [correct.length, partlyCorrect.length]]
                         }
                     )
                 }
@@ -150,14 +186,14 @@ export default function GameFunctionality() {
           <Tooltip title="How to play" className="place-self-end px-4 self-center text-3xl lg:text-4xl" arrow>
             <a href="/?show=true"><FontAwesomeIcon data-tooltip-target="info-tooltip" icon={faCircleInfo} className='text-darkgrey'/></a>
           </Tooltip>
-          <a onClick={() => startNewGame()} className="place-self-center rounded-lg border border-solid border-transparent transition-colors bg-darkgrey text-mygrey gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] py-2 px-4 sm:px-5">New Game</a>
+          <a onClick={() => startNewGame()} className="cursor-pointer place-self-center rounded-lg border border-solid border-transparent transition-colors bg-darkgrey text-mygrey gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] py-2 px-4 sm:px-5">New Game</a>
         </div>
         <div className="bg-darkgrey flex flex-col place-items-center p-4 grow">
           <h1 className="pt-16 text-mygrey text-4xl lg:text-5xl font-bold">Colordle</h1>
           <h2 className="text-mygrey text-xl lg:text-2xl pt-2 pb-8">Guess the color pattern</h2>
           {guesses.length > 0 && guesses.map((g, i) => <GameGrid key={i} guess={g} hints={hints[i]}></GameGrid>)}
           <GameGrid guess={currentGuess} hints={undefined}/>
-          {showAlert && <Alert severity="error">Not enough colors</Alert> }
+          {showAlert && <Alert className="mt-4" severity="error">Not enough colors</Alert> }
         </div>
         <div className='bg-mygrey pt-16 pb-24 flex flex-row justify-center align-end gap-8'>
             <div className='grid grid-cols-3 col-start-4 gap-2 place-content-center border border-solid rounded-lg border-darkgrey py-4 px-8'>
@@ -169,8 +205,8 @@ export default function GameFunctionality() {
                 <a onClick={() => setNextColor("Purple")}><FontAwesomeIcon icon={faCircle} className="text-5xl lg:text-6xl text-purple-500" /></a>
             </div>
             <div className='flex flex-col place-content-around'>
-                <a onClick={() => undoLastColor()}className='bg-mygrey rounded py-2 px-6 outline self-center border border-solid border-darkgrey'><FontAwesomeIcon icon={faDeleteLeft} className='text-2xl text-darkgrey self-center'/></a>
-                <a onClick={() => submitGuess()} className='rounded-lg border border-solid border-transparent transition-colors bg-darkgrey text-mygrey hover:bg-[#383838] dark:hover:bg-[#ccc] py-4 px-6 sm:px-5 text-xl'>Guess</a>
+                <button onClick={() => undoLastColor()}className='bg-mygrey rounded cursor-pointer py-2 px-6 outline self-center outline-2 outline-darkgrey'><FontAwesomeIcon icon={faDeleteLeft} className='text-2xl text-darkgrey self-center'/></button>
+                <button onClick={() => submitGuess()} className='rounded-lg cursor-pointer border border-solid border-transparent transition-colors bg-darkgrey text-mygrey hover:bg-[#383838] dark:hover:bg-[#ccc] py-4 px-6 sm:px-5 text-xl'>Guess</button>
             </div>
         </div>
     </>)
